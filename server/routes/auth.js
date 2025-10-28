@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { Wallet } from '../models/Wallet.js';
 import { protect } from '../middleware/auth.js';
+import { createNotification } from '../utils/notifications.js';
 
 const router = express.Router();
 
@@ -44,6 +45,15 @@ router.post('/register', async (req, res) => {
 
     await Wallet.create({
       user: user._id,
+    });
+
+    // Send welcome notification
+    await createNotification({
+      user: user._id,
+      type: 'system_announcement',
+      title: 'Welcome to Vyldo! 🎉',
+      message: `Hi ${displayName}! Welcome to our marketplace. Start exploring gigs or create your own to get started!`,
+      link: '/dashboard',
     });
 
     const token = generateToken(user._id);

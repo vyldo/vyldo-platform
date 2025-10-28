@@ -121,7 +121,7 @@ export default function Profile() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
           {profileData.bio && (
             <div className="card">
               <h2 className="text-xl font-bold mb-4">About</h2>
@@ -192,7 +192,7 @@ export default function Profile() {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 order-1 lg:order-2">
           {profileData.languages && profileData.languages.length > 0 && (
             <div className="card">
               <h2 className="text-xl font-bold mb-4">Languages</h2>

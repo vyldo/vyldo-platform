@@ -6,6 +6,7 @@ import { protect } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
 import { calculatePlatformFee } from '../utils/fees.js';
 import { verifyHiveTransaction, validateMemoFormat } from '../utils/hiveVerification.js';
+import { createNotification } from '../utils/notifications.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -134,6 +135,19 @@ router.post('/', protect, async (req, res) => {
     });
 
     console.log('✅ Order created:', order._id);
+
+    // Send notification to seller if order is active (paid)
+    if (orderStatus === 'active') {
+      await createNotification({
+        user: gig.seller._id,
+        type: 'order_placed',
+        title: 'New Order Received! 🎉',
+        message: `${req.user.displayName} placed an order for "${gig.title}"`,
+        link: `/orders/${order._id}`,
+        relatedOrder: order._id,
+        relatedUser: req.user._id,
+      });
+    }
 
     res.status(201).json({ 
       success: true, 
@@ -391,6 +405,20 @@ router.post('/:id/deliver', protect, upload.array('files', 10), async (req, res)
 
     console.log('✅ Order delivered with', uploadedFiles.length, 'files');
 
+    // Populate order for notification
+    const populatedOrder = await Order.findById(order._id).populate('buyer seller gig');
+
+    // Send notification to buyer
+    await createNotification({
+      user: populatedOrder.buyer._id,
+      type: 'order_delivered',
+      title: 'Order Delivered! 📦',
+      message: `${populatedOrder.seller.displayName} has delivered your order`,
+      link: `/orders/${order._id}`,
+      relatedOrder: order._id,
+      relatedUser: populatedOrder.seller._id,
+    });
+
     res.json({ 
       success: true, 
       order,
@@ -553,6 +581,20 @@ router.patch('/:id/accept', protect, async (req, res) => {
     }
 
     console.log('✅ Order completed and counts updated');
+
+    // Populate order for notification
+    const populatedOrder = await Order.findById(order._id).populate('buyer seller gig');
+
+    // Send notification to seller
+    await createNotification({
+      user: populatedOrder.seller._id,
+      type: 'order_completed',
+      title: 'Order Completed! ✅',
+      message: `${populatedOrder.buyer.displayName} marked your order as complete. Payment released!`,
+      link: `/orders/${order._id}`,
+      relatedOrder: order._id,
+      relatedUser: populatedOrder.buyer._id,
+    });
 
     res.json({ 
       success: true, 

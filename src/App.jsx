@@ -31,12 +31,15 @@ import TicketDetail from './pages/TicketDetail';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TrustAndSafety from './pages/TrustAndSafety';
+import Notifications from './pages/Notifications';
 
+// eslint-disable-next-line react/prop-types
 function PrivateRoute({ children }) {
   const { user } = useAuthStore();
   return user ? children : <Navigate to="/login" />;
 }
 
+// eslint-disable-next-line react/prop-types
 function AdminRoute({ children }) {
   const { user } = useAuthStore();
   
@@ -71,6 +74,7 @@ function App() {
         <Route path="orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
         <Route path="orders/:id" element={<PrivateRoute><OrderDetail /></PrivateRoute>} />
         <Route path="messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
+        <Route path="notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
         <Route path="wallet" element={<PrivateRoute><Wallet /></PrivateRoute>} />
         <Route path="withdrawals" element={<PrivateRoute><Withdrawals /></PrivateRoute>} />
         <Route path="admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />

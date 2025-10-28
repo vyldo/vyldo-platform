@@ -98,6 +98,7 @@ export default function Login() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="input-field"
                 placeholder="your@email.com"
+                autoComplete="username email"
               />
             </div>
 
@@ -110,6 +111,7 @@ export default function Login() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="input-field"
                 placeholder="••••••••"
+                autoComplete="current-password"
               />
             </div>
 

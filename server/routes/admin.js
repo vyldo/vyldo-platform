@@ -9,6 +9,7 @@ import Withdrawal from '../models/Withdrawal.js';
 import { protect } from '../middleware/auth.js';
 import { requireAdmin, requireAdminOrTeam, requirePermission } from '../middleware/adminAuth.js';
 import { generateAnalyticsReport } from '../utils/pdfGenerator.js';
+import { createNotification } from '../utils/notifications.js';
 import bcrypt from 'bcryptjs';
 import { 
   getTeamMemberStats, 
@@ -748,6 +749,28 @@ router.patch('/withdrawals/:id/process', requirePermission('manageWithdrawals'),
     await updateTeamMemberStats(req.user._id, 'withdrawal', withdrawal.amount);
 
     console.log(`✅ Withdrawal ${withdrawal._id} ${status} by ${currentUser.displayName}`);
+
+    // Populate withdrawal for notification
+    const populatedWithdrawal = await Withdrawal.findById(withdrawal._id).populate('user');
+
+    // Send notification to user
+    if (status === 'completed') {
+      await createNotification({
+        user: populatedWithdrawal.user._id,
+        type: 'withdrawal_processed',
+        title: 'Withdrawal Completed! 💰',
+        message: `Your withdrawal of ${withdrawal.amount} HIVE has been processed successfully`,
+        link: '/withdrawals',
+      });
+    } else if (status === 'rejected') {
+      await createNotification({
+        user: populatedWithdrawal.user._id,
+        type: 'withdrawal_rejected',
+        title: 'Withdrawal Rejected ❌',
+        message: `Your withdrawal request of ${withdrawal.amount} HIVE was rejected. ${rejectionReason || ''}`,
+        link: '/withdrawals',
+      });
+    }
 
     res.json({ success: true, withdrawal });
   } catch (error) {
