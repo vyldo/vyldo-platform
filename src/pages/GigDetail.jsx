@@ -15,6 +15,7 @@ export default function GigDetail() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [requirements, setRequirements] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const { data: gigData, isLoading } = useQuery(['gig', id], async () => {
     const res = await api.get(`/gigs/${id}`);
@@ -133,7 +134,7 @@ export default function GigDetail() {
 
             <div className="relative mb-8">
               <img
-                src={gigData.images?.[0] || '/placeholder.jpg'}
+                src={gigData.images?.[selectedImageIndex] || '/placeholder.jpg'}
                 alt={gigData.title}
                 className="w-full h-96 object-cover rounded-xl"
               />
@@ -148,13 +149,18 @@ export default function GigDetail() {
             </div>
 
             {gigData.images?.length > 1 && (
-              <div className="grid grid-cols-4 gap-4 mb-8">
-                {gigData.images.slice(1).map((img, index) => (
+              <div className="grid grid-cols-5 gap-4 mb-8">
+                {gigData.images.map((img, index) => (
                   <img
                     key={index}
                     src={img}
-                    alt={`${gigData.title} ${index + 2}`}
-                    className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80"
+                    alt={`${gigData.title} ${index + 1}`}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`w-full h-24 object-cover rounded-lg cursor-pointer transition-all ${
+                      selectedImageIndex === index
+                        ? 'ring-2 ring-blue-500 opacity-100'
+                        : 'hover:opacity-80 opacity-60'
+                    }`}
                   />
                 ))}
               </div>

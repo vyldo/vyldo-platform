@@ -267,6 +267,11 @@ if (process.env.NODE_ENV === 'production') {
 
 const PORT = process.env.PORT || 5000;
 
+// Increase server timeout for large file uploads
+httpServer.timeout = 300000; // 5 minutes
+httpServer.keepAliveTimeout = 300000;
+httpServer.headersTimeout = 310000;
+
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
