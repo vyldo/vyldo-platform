@@ -44,11 +44,18 @@ export default function Home() {
     }
   };
 
+  const getAssetUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    // Use window.location.origin directly for production
+    return `${window.location.origin}${path}`;
+  };
+
   useEffect(() => {
     console.log('🎥 Video URL:', heroSettings?.videoUrl);
     console.log('🖼️ Poster URL:', heroSettings?.posterUrl);
     if (videoRef.current && heroSettings?.videoUrl) {
-      const fullVideoUrl = `http://localhost:5000${heroSettings.videoUrl}`;
+      const fullVideoUrl = getAssetUrl(heroSettings.videoUrl);
       console.log('🔗 Full Video URL:', fullVideoUrl);
       videoRef.current.play().catch((err) => {
         console.log('⚠️ Autoplay blocked:', err);
@@ -72,11 +79,11 @@ export default function Home() {
                 muted
                 playsInline
                 autoPlay
-                poster={heroSettings?.posterUrl ? `http://localhost:5000${heroSettings.posterUrl}` : ''}
+                poster={getAssetUrl(heroSettings?.posterUrl)}
                 onError={(e) => console.error('❌ Video error:', e)}
                 onLoadedData={() => console.log('✅ Video loaded')}
               >
-                <source src={`http://localhost:5000${heroSettings.videoUrl}`} type="video/mp4" />
+                <source src={getAssetUrl(heroSettings.videoUrl)} type="video/mp4" />
               </video>
               {/* Video Overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 via-primary-800/70 to-primary-900/80"></div>

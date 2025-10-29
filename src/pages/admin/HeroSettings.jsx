@@ -229,7 +229,7 @@ export default function HeroSettings() {
                 <p className="text-sm font-medium text-gray-700 mb-2">Current Video:</p>
                 <div className="relative">
                   <video
-                    src={formData.videoUrl.startsWith('http') ? formData.videoUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${formData.videoUrl}`}
+                    src={formData.videoUrl.startsWith('http') ? formData.videoUrl : `${window.location.origin}${formData.videoUrl}`}
                     className="w-full max-w-md rounded-lg shadow-lg"
                     controls
                     muted
@@ -289,7 +289,7 @@ export default function HeroSettings() {
                 <p className="text-sm font-medium text-gray-700 mb-2">Current Poster:</p>
                 <div className="relative">
                   <img
-                    src={formData.posterUrl.startsWith('http') ? formData.posterUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${formData.posterUrl}`}
+                    src={formData.posterUrl.startsWith('http') ? formData.posterUrl : `${window.location.origin}${formData.posterUrl}`}
                     alt="Poster preview"
                     className="w-full max-w-md rounded-lg shadow-lg"
                   />
