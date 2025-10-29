@@ -27,7 +27,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest', // CSRF protection
   },
-  timeout: 30000, // 30 second timeout
+  timeout: 300000, // 5 minute timeout for large file uploads
   withCredentials: true,
 });
 
