@@ -369,6 +369,7 @@ router.get('/seller/:sellerId', async (req, res) => {
       seller: req.params.sellerId,
       isActive: true 
     })
+    .populate('seller', 'displayName username avatar sellerLevel isVerified verifiedText verifiedBadgeType verifiedBadgeImage rating totalOrders')
     .populate('category', 'name slug')
     .sort('-createdAt');
 

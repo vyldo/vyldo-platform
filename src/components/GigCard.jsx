@@ -10,6 +10,7 @@ export default function GigCard({ gig }) {
         <img
           src={gig.images?.[0] || '/placeholder.jpg'}
           alt={gig.title}
+          loading="lazy"
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
         <button className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-gray-100">
@@ -22,6 +23,7 @@ export default function GigCard({ gig }) {
           <img
             src={gig.seller?.avatar || '/avatar.jpg'}
             alt={gig.seller?.displayName}
+            loading="lazy"
             className="w-6 h-6 rounded-full"
           />
           <span className="text-sm font-medium text-gray-700">{gig.seller?.displayName}</span>
