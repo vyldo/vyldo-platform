@@ -2,7 +2,7 @@ import express from 'express';
 import HeroSettings from '../models/HeroSettings.js';
 import { protect } from '../middleware/auth.js';
 import { requireAdminOrTeam, requirePermission } from '../middleware/adminAuth.js';
-import { upload } from '../middleware/upload.js';
+import { upload, handleUploadError } from '../middleware/upload.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -54,7 +54,7 @@ const deleteOldFile = (filePath) => {
 };
 
 // Upload hero video
-router.post('/hero/upload-video', protect, requireAdminOrTeam, requirePermission('manageSettings'), upload.single('video'), async (req, res) => {
+router.post('/hero/upload-video', protect, requireAdminOrTeam, requirePermission('manageSettings'), upload.single('video'), handleUploadError, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No video file uploaded' });
@@ -82,7 +82,7 @@ router.post('/hero/upload-video', protect, requireAdminOrTeam, requirePermission
 });
 
 // Upload hero poster
-router.post('/hero/upload-poster', protect, requireAdminOrTeam, requirePermission('manageSettings'), upload.single('poster'), async (req, res) => {
+router.post('/hero/upload-poster', protect, requireAdminOrTeam, requirePermission('manageSettings'), upload.single('poster'), handleUploadError, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No poster file uploaded' });

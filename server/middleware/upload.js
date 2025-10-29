@@ -73,6 +73,38 @@ export const upload = multer({
   storage,
   limits: {
     fileSize: 2 * 1024 * 1024 * 1024, // 2GB limit
+    files: 10, // Maximum 10 files at once
   },
   fileFilter,
 });
+
+// Error handling middleware for multer
+export const handleUploadError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        message: 'File too large. Maximum size is 2GB',
+        error: err.message 
+      });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ 
+        message: 'Too many files. Maximum is 10 files',
+        error: err.message 
+      });
+    }
+    return res.status(400).json({ 
+      message: 'File upload error',
+      error: err.message 
+    });
+  }
+  
+  if (err) {
+    return res.status(400).json({ 
+      message: err.message || 'File upload failed',
+      error: err.message 
+    });
+  }
+  
+  next();
+};

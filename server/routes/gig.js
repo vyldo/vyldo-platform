@@ -4,11 +4,11 @@ import User from '../models/User.js';
 import { protect, optionalAuth } from '../middleware/auth.js';
 import Review from '../models/Review.js';
 import { rankGigs, rankSearchResults } from '../utils/gigRanking.js';
-import { upload } from '../middleware/upload.js';
+import { upload, handleUploadError } from '../middleware/upload.js';
 
 const router = express.Router();
 
-router.post('/', protect, upload.array('images', 5), async (req, res) => {
+router.post('/', protect, upload.array('images', 5), handleUploadError, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     
