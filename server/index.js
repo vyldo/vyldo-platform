@@ -42,30 +42,18 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: (origin, callback) => {
-      // Allow all tunnel services and localhost
-      if (!origin || 
-          origin.includes('localhost') || 
-          origin.includes('127.0.0.1') ||
-          origin.includes('serveo.net') ||
-          origin.includes('localhost.run') ||
-          origin.includes('ngrok.io') ||
-          origin.includes('ngrok-free.app') ||
-          origin.includes('loca.lt') ||
-          origin.includes('bore.pub') ||
-          origin.includes('trycloudflare.com') ||
-          origin.includes('pinggy.io')) {
-        callback(null, true);
-      } else {
-        callback(null, false);
-      }
-    },
+    origin: true, // Allow all origins in production
     credentials: true,
     methods: ["GET", "POST"],
   },
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vyldo-platform')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vyldo-platform', {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
   .then(async () => {
     console.log('✅ MongoDB connected successfully');
     
@@ -87,7 +75,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vyldo-pla
     // Start auto-assignment service for withdrawals
     startAutoAssignment();
   })
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+  .catch((err) => {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+  });
 
 // Enhanced Helmet security headers
 app.use(helmet({
@@ -120,24 +111,28 @@ app.use(helmet({
   xssFilter: true,
 }));
 
-// CORS configuration for public access
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  process.env.CLIENT_URL,
-];
-
+// CORS configuration for production
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
     if (!origin) return callback(null, true);
     
-    // Allow localhost
+    // Allow localhost for development
     if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       return callback(null, true);
     }
     
-    // Allow tunnel services
+    // Allow production domain/IP
+    if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) {
+      return callback(null, true);
+    }
+    
+    // Allow any HTTPS origin in production (for AWS EC2)
+    if (process.env.NODE_ENV === 'production') {
+      return callback(null, true);
+    }
+    
+    // Allow tunnel services for development
     if (
       origin.includes('serveo.net') ||
       origin.includes('localhost.run') ||
@@ -151,12 +146,7 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // Allow configured origins
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    
-    callback(new Error('Not allowed by CORS'));
+    callback(null, true); // Allow all in production for now
   },
   credentials: true,
 }));
@@ -213,10 +203,10 @@ app.use(session({
   },
 }));
 
-// General rate limiter
+// General rate limiter - more lenient for production
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  max: 200, // 200 requests per window (increased for production)
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -229,7 +219,7 @@ const limiter = rateLimit({
 // Strict rate limiter for auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 login/register attempts
+  max: 10, // 10 login/register attempts (increased for production)
   message: 'Too many authentication attempts, please try again after 15 minutes.',
   skipSuccessfulRequests: true,
 });
