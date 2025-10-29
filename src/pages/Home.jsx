@@ -15,6 +15,9 @@ export default function Home() {
   const { data: topGigs } = useQuery('topGigs', async () => {
     const res = await api.get('/gigs?limit=10&sort=-rating');
     return res.data.gigs;
+  }, {
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 
   // Fetch hero video settings
@@ -79,6 +82,7 @@ export default function Home() {
                 muted
                 playsInline
                 autoPlay
+                preload="metadata"
                 poster={getAssetUrl(heroSettings?.posterUrl)}
                 onError={(e) => console.error('❌ Video error:', e)}
                 onLoadedData={() => console.log('✅ Video loaded')}
@@ -218,6 +222,7 @@ export default function Home() {
                   <img
                     src={gig.images?.[0] || '/placeholder.jpg'}
                     alt={gig.title}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute top-2 right-2 bg-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full flex items-center gap-1 shadow-lg">
@@ -230,6 +235,7 @@ export default function Home() {
                     <img
                       src={gig.seller?.avatar || '/avatar.jpg'}
                       alt={gig.seller?.displayName}
+                      loading="lazy"
                       className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full"
                     />
                     <span className="text-xs sm:text-sm text-gray-600 truncate">{gig.seller?.displayName}</span>
