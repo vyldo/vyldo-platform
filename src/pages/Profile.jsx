@@ -94,10 +94,10 @@ export default function Profile() {
               Edit Profile
             </Link>
           ) : (
-            <button className="btn-primary">
+            <Link to={`/messages?user=${profileData._id}`} className="btn-primary">
               <MessageCircle className="w-5 h-5 inline mr-2" />
               Contact
-            </button>
+            </Link>
           )}
         </div>
 
