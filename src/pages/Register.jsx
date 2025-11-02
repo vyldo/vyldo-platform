@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../lib/axios';
-import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Eye, EyeOff, Mail, Clock } from 'lucide-react';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -21,6 +21,13 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
+  // OTP States
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
+  
   // Math CAPTCHA
   const [num1, setNum1] = useState(Math.floor(Math.random() * 10) + 1);
   const [num2, setNum2] = useState(Math.floor(Math.random() * 10) + 1);
@@ -32,26 +39,90 @@ export default function Register() {
     setCaptchaAnswer('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+  // OTP Timer Effect
+  useEffect(() => {
+    if (otpTimer > 0) {
+      const interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [otpTimer]);
 
-    if (!acceptedTerms) {
-      setError('Please accept the Terms of Service and Privacy Policy to continue');
+  // Send OTP
+  const handleSendOTP = async () => {
+    setError('');
+    
+    // Validate form first
+    if (!formData.email || !formData.displayName || !formData.username || !formData.password || !formData.confirmPassword) {
+      setError('Please fill all required fields');
       return;
     }
 
-    // Check password match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError('Please accept the Terms of Service');
       return;
     }
 
     // Verify CAPTCHA
     const correctAnswer = num1 + num2;
     if (parseInt(captchaAnswer) !== correctAnswer) {
-      setError('Incorrect CAPTCHA answer. Please try again with new numbers.');
+      setError('Incorrect CAPTCHA answer');
       regenerateCaptcha();
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      await api.post('/otp/send-signup-otp', { email: formData.email });
+      setOtpSent(true);
+      setOtpTimer(300); // 5 minutes
+      setError('');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send OTP');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // Verify OTP
+  const handleVerifyOTP = async () => {
+    if (!otp || otp.length !== 6) {
+      setError('Please enter 6-digit OTP');
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      await api.post('/otp/verify-signup-otp', { 
+        email: formData.email, 
+        otp 
+      });
+      setOtpVerified(true);
+      setError('');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid OTP');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!otpVerified) {
+      setError('Please verify your email with OTP first');
       return;
     }
 
@@ -197,9 +268,85 @@ export default function Register() {
                 onChange={(e) => setCaptchaAnswer(e.target.value)}
                 className="input-field"
                 placeholder="Enter the answer"
+                disabled={otpSent}
               />
               <p className="text-xs text-gray-500 mt-1">Please solve this simple math problem to continue</p>
             </div>
+
+            {/* Send OTP Button */}
+            {!otpSent && (
+              <button
+                type="button"
+                onClick={handleSendOTP}
+                disabled={otpLoading}
+                className="btn-primary w-full flex items-center justify-center gap-2"
+              >
+                <Mail className="w-5 h-5" />
+                {otpLoading ? 'Sending OTP...' : 'Send OTP to Email'}
+              </button>
+            )}
+
+            {/* OTP Input Section */}
+            {otpSent && !otpVerified && (
+              <div className="space-y-3">
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Mail className="w-5 h-5 text-blue-600" />
+                    <p className="text-sm font-semibold text-blue-900">OTP sent to {formData.email}</p>
+                  </div>
+                  <p className="text-xs text-blue-700">Check your inbox and enter the 6-digit code below</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Enter 6-Digit OTP
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                    className="input-field text-center text-2xl font-bold tracking-widest"
+                    placeholder="000000"
+                  />
+                  {otpTimer > 0 && (
+                    <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
+                      <Clock className="w-4 h-4" />
+                      <span>Expires in {Math.floor(otpTimer / 60)}:{(otpTimer % 60).toString().padStart(2, '0')}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleVerifyOTP}
+                    disabled={otpLoading || otp.length !== 6}
+                    className="btn-primary flex-1"
+                  >
+                    {otpLoading ? 'Verifying...' : 'Verify OTP'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendOTP}
+                    disabled={otpLoading || otpTimer > 0}
+                    className="btn-secondary"
+                  >
+                    Resend
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* OTP Verified Success */}
+            {otpVerified && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm font-semibold text-green-900 flex items-center gap-2">
+                  <span className="text-xl">✅</span>
+                  Email verified successfully!
+                </p>
+              </div>
+            )}
 
             <div className="flex items-start gap-3">
               <input
@@ -221,7 +368,11 @@ export default function Register() {
               </label>
             </div>
 
-            <button type="submit" disabled={loading || !acceptedTerms || !captchaAnswer} className="btn-primary w-full">
+            <button 
+              type="submit" 
+              disabled={loading || !otpVerified} 
+              className="btn-primary w-full"
+            >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>

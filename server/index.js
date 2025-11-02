@@ -235,6 +235,7 @@ app.use('/api/auth/register', authLimiter);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/otp', (await import('./routes/otp.js')).default);
 app.use('/api/users', userRoutes);
 app.use('/api/gigs', gigRoutes);
 app.use('/api/orders', orderRoutes);

@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import GigDetail from './pages/GigDetail';
 import CreateGig from './pages/CreateGig';
 import EditGig from './pages/EditGig';
@@ -61,6 +62,7 @@ function App() {
         <Route index element={<Home />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="search" element={<Search />} />
         <Route path="category/:slug" element={<Category />} />
         <Route path="gigs/:id" element={<GigDetail />} />

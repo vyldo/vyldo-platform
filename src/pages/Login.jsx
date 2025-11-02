@@ -150,6 +150,12 @@ export default function Login() {
           </form>
 
           <div className="mt-4 text-center">
+            <Link to="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+              Forgot Password?
+            </Link>
+          </div>
+
+          <div className="mt-4 text-center">
             <p className="text-xs text-gray-500">
               By signing in, you agree to our{' '}
               <Link to="/terms-of-service" target="_blank" className="text-primary-600 hover:text-primary-700">
